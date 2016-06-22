@@ -1,8 +1,7 @@
-from revertui import app
+from www import app
 from flask import render_template, session, url_for, redirect, request, flash, jsonify, escape, Response
 from flask_oauthlib.client import OAuth, get_etree
 from db import database, Task
-import config
 import urllib2
 import json
 import random
@@ -16,8 +15,8 @@ openstreetmap = oauth.remote_app('OpenStreetMap',
                                  request_token_url='https://www.openstreetmap.org/oauth/request_token',
                                  access_token_url='https://www.openstreetmap.org/oauth/access_token',
                                  authorize_url='https://www.openstreetmap.org/oauth/authorize',
-                                 consumer_key=config.OAUTH_KEY,
-                                 consumer_secret=config.OAUTH_SECRET
+                                 consumer_key=app.config['OAUTH_KEY'],
+                                 consumer_secret=app.config['OAUTH_SECRET']
                                  )
 
 
@@ -150,7 +149,7 @@ def show(revid):
     except Task.DoesNotExist:
         flash('There is not job with id={0}'.format(revid))
         return redirect(url_for('queue'))
-    can_cancel = task.pending and task.user == session['osm_username']
+    can_cancel = task.pending and task.username == session['osm_username']
     return render_template('job.html', job=task, can_cancel=can_cancel)
 
 
@@ -159,7 +158,7 @@ def cancel_task(revid):
     database.connect()
     try:
         task = Task.get(Task.id == revid)
-        if task.user != session['osm_username']:
+        if task.username != session['osm_username']:
             flash('A task can be cancelled only by its owner.')
         elif task.pending:
             task.delete_instance()

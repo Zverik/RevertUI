@@ -1,3 +1,3 @@
 #!/usr/bin/env python
-from revertui import app
+from www import app
 app.run(debug=True)

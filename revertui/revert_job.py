@@ -81,7 +81,7 @@ if __name__ == '__main__':
     except RevertError as e:
         update_status_exit_on_error(task, 'revert error', e.message)
 
-    oauth = OAuth1(task.token, task.secret, config.OAUTH_KEY, config.OAUTH_SECRET)
+    oauth = OAuth1(config.OAUTH_KEY, config.OAUTH_SECRET, task.token, task.secret)
 
     tags = {
         'created_by': config.CREATED_BY,
