@@ -1,0 +1,32 @@
+<?doctype html>
+<html>
+  <head>
+    <title>RevertUI</title>
+    <meta charset="utf-8">
+  </head>
+  <body>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div id="flash">{{ messages[0] }}</div>
+    {% endif %}
+    {% endwith %}
+    <form action="{{ url_for('revert') }}" method="post">
+      <input type="hidden" name="csrf" value="{{ csrf_token }}">
+      Please list changeset ids to revert:
+      <br>
+      <textarea name="changesets"></textarea>
+      <br>
+      Comment: <input type="text" name="comment">
+      <br>
+      <input type="submit" value="Revert these">
+    </form>
+    <div>
+      User name to list changesets:
+      <input type="text" size="50" name="user">
+      <button>&gt;&gt;</button>
+    </div>
+    <div id="changesets">
+    </div>
+    <p><a href="{{ url_for('queue') }}">Queue</a></p>
+  </body>
+</html>

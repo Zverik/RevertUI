@@ -1,0 +1,23 @@
+<?doctype html>
+<html>
+  <head>
+    <title>RevertUI Queue</title>
+    <meta charset="utf-8">
+  </head>
+  <body>
+    <p><a href="/">Revert more</a></p>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div id="flash">{{ messages[0] }}</div>
+    {% endif %}
+    {% endwith %}
+    <h2>Pending</h2>
+    {% for job in pending %}
+    <a href="{{ url_for('show', revid=job.id) }}">Job {{ job.id }}</a> by {{ job.username}}, {{ job.status }}: {{ job.changesets }}<br>
+    {% endfor %}
+    <h2>Done</h2>
+    {% for job in done %}
+    <a href="{{ url_for('show', revid=job.id) }}">Job {{ job.id }}</a> by {{ job.username }}, {{ job.status }}: {{ job.changesets }}<br>
+    {% endfor %}
+  </body>
+</html>

@@ -1,0 +1,3 @@
+[submodule "simple_revert"]
+	path = simple_revert
+	url = https://github.com/Zverik/simple-revert.git
