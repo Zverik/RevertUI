@@ -9,7 +9,6 @@ from db import database, Task
 from simple_revert.simple_revert import download_changesets, revert_changes
 from simple_revert.common import RevertError, API_ENDPOINT, changeset_xml, changes_to_osc
 
-
 LOCK_FILENAME = os.path.join(os.path.dirname(__file__), 'lock')
 
 
@@ -99,11 +98,12 @@ if __name__ == '__main__':
     osc = changes_to_osc(changes, changeset_id)
     resp = requests.post('{0}/api/0.6/changeset/{1}/upload'.format(API_ENDPOINT, changeset_id), osc, auth=oauth)
     if resp.status_code == 200:
-        update_status_exit_on_error(task, 'done')
+        task.status = 'done'
+        task.error = str(changeset_id)
     else:
         # We don't want to exit before closing the changeset
         task.status = 'error'
         task.error = 'Server rejected the changeset with code {0}: {1}'.format(resp.code, resp.text)
-        task.save()
+    task.save()
 
     resp = requests.put('{0}/api/0.6/changeset/{1}/close'.format(API_ENDPOINT, changeset_id), auth=oauth)

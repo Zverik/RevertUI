@@ -1,29 +1,21 @@
-<?doctype html>
-<html>
-  <head>
-    <title>RevertUI Queue</title>
-    <meta charset="utf-8">
-  </head>
-  <body>
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-    <div id="flash">{{ messages[0] }}</div>
+{% extends 'layout.html' %}
+{% block title %}Job {{ job.id }}{% endblock %}
+{% block content %}
+  <div>
+    Reverting changesets: {{ job.changesets }}<br>
+    Comment: {{ job.comment }}<br>
+    User: {{ job.username }}<br>
+    Added: {{ job.timestamp.strftime('%d.%m.%Y') }}<br>
+    <br>
+    Status: {{ job.status }}<br>
+    {% if job.status == 'done' %}
+    Changeset: <a href="https://www.openstreetmap.org/changeset/{{ job.error }}">{{ job.error }}</a><br>
+    {% elif job.error %}
+    Error: {{ job.error }}<br>
     {% endif %}
-    {% endwith %}
-    <div>
-      Reverting changesets: {{ job.changesets }}<br>
-      Comment: {{ job.comment }}<br>
-      User: {{ job.username }}<br>
-      Added: {{ job.timestamp.strftime('%d.%m.%Y') }}<br>
-      <br>
-      Status: {{ job.status }}<br>
-      {% if job.error %}
-      Error: {{ job.error }}<br>
-      {% endif %}
-    </div>
-    {% if can_cancel %}
-    <p><a href="{{ url_for('cancel_task', revid=job.id) }}">Cancel job</a></p>
-    {% endif %}
-    <p><a href="{{ url_for('queue') }}">To queue</a></p>
-  </body>
-</html>
+  </div>
+  {% if can_cancel %}
+  <p><a href="{{ url_for('cancel_task', revid=job.id) }}">Cancel job</a></p>
+  {% endif %}
+  <p><a href="{{ url_for('queue') }}">To queue</a></p>
+{% endblock %}

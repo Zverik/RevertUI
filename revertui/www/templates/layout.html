@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+  <head>
+    <title>RevertUI - {% block title %}{% endblock %}</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <script type="text/javascript" href="{{ url_for('static', filename='revertui.js') }}"></script>
+  </head>
+  <body>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div id="flash">{{ messages[0] }}</div>
+    {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </body>
+</html>

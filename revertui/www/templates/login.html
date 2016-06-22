@@ -1,6 +1,7 @@
-<?doctype html>
-<meta charset="utf-8">
-<title>RevertUI</title>
+{% extends 'layout.html' %}
+{% block title %}Login{% endblock %}
+{% block content %}
 <form action="{{ url_for('login') }}" method="get">
   <input type="submit" value="Login to OpenStreetMap">
 </form>
+{% endblock %}
