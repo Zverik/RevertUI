@@ -78,16 +78,17 @@ if __name__ == '__main__':
     except RevertError as e:
         update_status_exit_on_error(task, 'download error', e.message)
 
-    if not diffs:
-        update_status_exit_on_error(task, 'already reverted')
-        sys.exit(0)
-    elif len(diffs) > config.MAX_DIFFS:
+    if len(diffs) > config.MAX_DIFFS:
         update_status_exit_on_error(task, 'too big', 'Would not revert {0} changes'.format(len(diffs)))
 
     try:
         changes = revert_changes(diffs, print_status)
     except RevertError as e:
         update_status_exit_on_error(task, 'revert error', e.message)
+
+    if not changes:
+        update_status_exit_on_error(task, 'already reverted')
+        sys.exit(0)
 
     oauth = OAuth1(config.OAUTH_KEY, config.OAUTH_SECRET, task.token, task.secret)
 
