@@ -1,3 +1,4 @@
 instance/
 *.pyc
 revertui.db
+lock

@@ -24,6 +24,11 @@ def free_lock():
         os.remove(filename)
 
 
+def lexit(code):
+    free_lock()
+    sys.exit(code)
+
+
 def update_status_exit_on_error(task, status, error=None):
     if task.status == status and error is None:
         return
@@ -32,7 +37,7 @@ def update_status_exit_on_error(task, status, error=None):
         task.error = error
     task.save()
     if error is not None:
-        sys.exit(1)
+        lexit(1)
 
 if __name__ == '__main__':
     if not lock():
@@ -44,7 +49,7 @@ if __name__ == '__main__':
         task = Task.get(Task.pending)
     except Task.DoesNotExist:
         # Yay, no jobs for us.
-        sys.exit(0)
+        lexit(0)
 
     task.pending = False
     task.status = 'start'
@@ -69,7 +74,7 @@ if __name__ == '__main__':
 
     if not diffs:
         update_status_exit_on_error(task, 'already reverted')
-        sys.exit(0)
+        lexit(0)
     elif len(diffs) > config.MAX_DIFFS:
         update_status_exit_on_error(task, 'too big', 'Would not revert {0} changes'.format(len(diffs)))
 
