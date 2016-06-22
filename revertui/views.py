@@ -150,7 +150,8 @@ def show(revid):
     except Task.DoesNotExist:
         flash('There is not job with id={0}'.format(revid))
         return redirect(url_for('queue'))
-    return render_template('job.html', job=task)
+    can_cancel = task.pending and task.user == session['osm_username']
+    return render_template('job.html', job=task, can_cancel=can_cancel)
 
 
 @app.route('/<int:revid>/cancel')
@@ -158,7 +159,9 @@ def cancel_task(revid):
     database.connect()
     try:
         task = Task.get(Task.id == revid)
-        if task.pending:
+        if task.user != session['osm_username']:
+            flash('A task can be cancelled only by its owner.')
+        elif task.pending:
             task.delete_instance()
         else:
             flash('The task is not pending, cannot cancel it.')

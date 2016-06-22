@@ -3,30 +3,28 @@ import sys
 import os
 import config
 import requests
+import atexit
 from requests_oauthlib import OAuth1
 from db import database, Task
 from simple_revert.simple_revert import download_changesets, revert_changes
 from simple_revert.common import RevertError, API_ENDPOINT, changeset_xml, changes_to_osc
 
 
-def lock():
-    filename = os.path.join(os.path.dirname(__file__), 'lock')
-    if os.path.exists(filename):
-        return False
-    with open(filename, 'w') as f:
-        f.write('Remove this if {0} is not running'.format(sys.argv[0]))
-    return True
+LOCK_FILENAME = os.path.join(os.path.dirname(__file__), 'lock')
 
 
 def free_lock():
-    filename = os.path.join(os.path.dirname(__file__), 'lock')
-    if os.path.exists(filename):
-        os.remove(filename)
+    if os.path.exists(LOCK_FILENAME):
+        os.remove(LOCK_FILENAME)
 
 
-def lexit(code):
-    free_lock()
-    sys.exit(code)
+def lock():
+    if os.path.exists(LOCK_FILENAME):
+        return False
+    with open(LOCK_FILENAME, 'w') as f:
+        f.write('Remove this if {0} is not running'.format(sys.argv[0]))
+    atexit.register(free_lock)
+    return True
 
 
 def update_status_exit_on_error(task, status, error=None):
@@ -37,7 +35,7 @@ def update_status_exit_on_error(task, status, error=None):
         task.error = error
     task.save()
     if error is not None:
-        lexit(1)
+        sys.exit(1)
 
 if __name__ == '__main__':
     if not lock():
@@ -49,7 +47,7 @@ if __name__ == '__main__':
         task = Task.get(Task.pending)
     except Task.DoesNotExist:
         # Yay, no jobs for us.
-        lexit(0)
+        sys.exit(0)
 
     task.pending = False
     task.status = 'start'
@@ -74,7 +72,7 @@ if __name__ == '__main__':
 
     if not diffs:
         update_status_exit_on_error(task, 'already reverted')
-        lexit(0)
+        sys.exit(0)
     elif len(diffs) > config.MAX_DIFFS:
         update_status_exit_on_error(task, 'too big', 'Would not revert {0} changes'.format(len(diffs)))
 
@@ -92,15 +90,15 @@ if __name__ == '__main__':
     }
 
     resp = requests.put(API_ENDPOINT + '/api/0.6/changeset/create', data=changeset_xml(tags), auth=oauth)
-    if resp.status == 200:
+    if resp.status_code == 200:
         changeset_id = resp.text
     else:
         update_status_exit_on_error(
-            task, 'error', 'Failed to create changeset: {0} {1}.'.format(resp.status, resp.reason))
+            task, 'error', 'Failed to create changeset: {0} {1}.'.format(resp.status_code, resp.reason))
 
     osc = changes_to_osc(changes, changeset_id)
     resp = requests.post('{0}/api/0.6/changeset/{1}/upload'.format(API_ENDPOINT, changeset_id), osc, auth=oauth)
-    if resp.status == 200:
+    if resp.status_code == 200:
         update_status_exit_on_error(task, 'done')
     else:
         # We don't want to exit before closing the changeset
@@ -109,4 +107,3 @@ if __name__ == '__main__':
         task.save()
 
     resp = requests.put('{0}/api/0.6/changeset/{1}/close'.format(API_ENDPOINT, changeset_id), auth=oauth)
-    free_lock()

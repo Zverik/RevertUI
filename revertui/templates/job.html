@@ -21,7 +21,7 @@
       Error: {{ job.error }}<br>
       {% endif %}
     </div>
-    {% if job.pending %}
+    {% if can_cancel %}
     <p><a href="{{ url_for('cancel_task', revid=job.id) }}">Cancel job</a></p>
     {% endif %}
     <p><a href="{{ url_for('queue') }}">To queue</a></p>
