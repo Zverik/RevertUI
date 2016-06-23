@@ -2,3 +2,4 @@ instance/
 *.pyc
 revertui.db
 lock
+revertui/venv/
