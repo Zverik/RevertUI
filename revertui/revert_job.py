@@ -5,6 +5,7 @@ import os
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, BASE_DIR)
 
+# Include virtualenv into path
 PYTHON = 'python2.7'
 VENV_DIR = os.path.join(BASE_DIR, 'venv', 'lib', PYTHON, 'site-packages')
 if os.path.exists(VENV_DIR):
@@ -94,8 +95,8 @@ if __name__ == '__main__':
 
     tags = {
         'created_by': config.CREATED_BY,
-        'comment': task.comment or 'Reverting {0}'.format(
-            ', '.join(['{0} by {1}'.format(str(x), ch_users[x]) for x in changesets]))
+        'comment': (task.comment or 'Reverting {0}'.format(
+            ', '.join(['{0} by {1}'.format(str(x), ch_users[x]) for x in changesets]))).encode('utf-8')
     }
 
     resp = requests.put(API_ENDPOINT + '/api/0.6/changeset/create', data=changeset_xml(tags), auth=oauth)
