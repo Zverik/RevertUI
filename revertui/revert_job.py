@@ -46,18 +46,8 @@ def update_status_exit_on_error(task, status, error=None):
     if error is not None:
         sys.exit(1)
 
-if __name__ == '__main__':
-    if not lock():
-        sys.exit(0)
 
-    database.connect()
-    database.create_tables([Task], safe=True)
-    try:
-        task = Task.get(Task.pending)
-    except Task.DoesNotExist:
-        # Yay, no jobs for us.
-        sys.exit(0)
-
+def process(task):
     task.pending = False
     task.status = 'start'
     task.save()
@@ -106,15 +96,34 @@ if __name__ == '__main__':
         update_status_exit_on_error(
             task, 'error', 'Failed to create changeset: {0} {1}.'.format(resp.status_code, resp.reason))
 
-    osc = changes_to_osc(changes, changeset_id)
-    resp = requests.post('{0}/api/0.6/changeset/{1}/upload'.format(API_ENDPOINT, changeset_id), osc, auth=oauth)
-    if resp.status_code == 200:
-        task.status = 'done'
-        task.error = str(changeset_id)
-    else:
-        # We don't want to exit before closing the changeset
-        task.status = 'error'
-        task.error = 'Server rejected the changeset with code {0}: {1}'.format(resp.code, resp.text)
-    task.save()
+    try:
+        osc = changes_to_osc(changes, changeset_id)
+        resp = requests.post('{0}/api/0.6/changeset/{1}/upload'.format(API_ENDPOINT, changeset_id), osc, auth=oauth)
+        if resp.status_code == 200:
+            task.status = 'done'
+            task.error = str(changeset_id)
+        else:
+            # We don't want to exit before closing the changeset
+            task.status = 'error'
+            task.error = 'Server rejected the changeset with code {0}: {1}'.format(resp.code, resp.text)
+        task.save()
+    finally:
+        resp = requests.put('{0}/api/0.6/changeset/{1}/close'.format(API_ENDPOINT, changeset_id), auth=oauth)
 
-    resp = requests.put('{0}/api/0.6/changeset/{1}/close'.format(API_ENDPOINT, changeset_id), auth=oauth)
+
+if __name__ == '__main__':
+    if not lock():
+        sys.exit(0)
+
+    database.connect()
+    database.create_tables([Task], safe=True)
+    try:
+        task = Task.get(Task.pending)
+    except Task.DoesNotExist:
+        # Yay, no jobs for us.
+        sys.exit(0)
+
+    try:
+        process(task)
+    except Exception as e:
+        update_status_exit_on_error(task, 'system error', str(e))
