@@ -14,12 +14,12 @@
     {% for job in jobs %}
       <div>
       <a href="{{ url_for('show', revid=job.id) }}">Job {{ job.id }}</a>
-      by {{ job.username}}, {{ job.status }}:
+      by {{ job.username}} on {{ job.timestamp.strftime('%d.%m') }}, {{ job.status }}:
       {% set chs = job.changeset_ids() | length %}
       {% if chs <= 3 %}
       {{ job.changesets }}
       {% else %}
-      {{ chs }} changeset{% if chs > 1 %}s{% endif %}
+      {{ chs }} changesets
       {% endif %}
       </div>
     {% endfor %}
