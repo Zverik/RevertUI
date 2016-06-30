@@ -5,7 +5,7 @@
   </div>
   <div>
     Reverting changesets:
-    {% for ch in changesets %}
+    {% for ch in job.changeset_ids() %}
     <a href="https://www.openstreetmap.org/changeset/{{ ch }}">{{ ch }}</a>
     {% endfor %}<br>
     Comment: {{ job.comment }}<br>

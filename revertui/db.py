@@ -18,3 +18,6 @@ class Task(Model):
 
     class Meta:
         database = database
+
+    def changeset_ids(self):
+        return self.changesets.split()

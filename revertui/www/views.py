@@ -160,8 +160,7 @@ def show(revid):
         flash('There is not job with id={0}'.format(revid))
         return redirect(url_for('queue'))
     can_cancel = task.pending and task.username == session['osm_username']
-    changesets = task.changesets.split()
-    return render_template('job.html', job=task, can_cancel=can_cancel, changesets=changesets)
+    return render_template('job.html', job=task, can_cancel=can_cancel)
 
 
 @app.route('/<int:revid>/cancel')
