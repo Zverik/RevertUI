@@ -1,11 +1,12 @@
 from www import app
-from flask import render_template, session, url_for, redirect, request, flash, jsonify, escape, Response
+from flask import render_template, session, url_for, redirect, request, flash, jsonify, escape, Response, abort
 from flask_oauthlib.client import OAuth, get_etree
 from db import database, Task
 import urllib2
 import json
 import random
 import string
+from datetime import datetime
 
 API_ENDPOINT = 'https://api.openstreetmap.org/api/0.6/'
 
@@ -74,9 +75,9 @@ def get_changesets(query):
         changesets = []
         for changeset in root.findall('changeset'):
             res = {
-                'id': int(changeset.get('id')),
+                'id': changeset.get('id'),
                 'user': changeset.get('user'),
-                'created': changeset.get('created_at'),
+                'created': datetime.strptime(changeset.get('created_at'), '%Y-%m-%dT%H:%M:%SZ'),
                 'tags': {}
             }
             for tag in changeset.findall('tag'):
@@ -87,12 +88,19 @@ def get_changesets(query):
         return None
 
 
-@app.route('/changeset/<int:changeset_id>')
-def changeset(changeset_id):
-    changesets = get_changesets('changeset/' + str(changeset_id))
+@app.route('/changeset/<changeset_ids>')
+def changeset(changeset_ids):
+    import re
+    if not re.match(r'^\d+(,\d+)*$', changeset_ids):
+        abort(401)
+    changesets = get_changesets('changesets?changesets=' + changeset_ids)
     if changesets is None or len(changesets) == 0:
-        return jsonify(status='Error')
-    return jsonify(**changesets[0])
+        return '<div class="changeset">Changesets {0}</div>'.format(changeset_ids)
+    # Reorder changesets in the query order
+    d = {}
+    for ch in changesets:
+        d[ch['id']] = ch
+    return ''.join([render_template('changeset.html', changeset=d[x]) for x in changeset_ids.split(',')])
 
 
 @app.route('/by_user/<user>')
@@ -173,5 +181,5 @@ def cancel_task(revid):
 def queue():
     database.connect()
     pending = Task.select().where(Task.pending)
-    done = Task.select().where(~Task.pending)
+    done = Task.select().where(~Task.pending).order_by(-Task.id).limit(app.config['MAX_HISTORY'])
     return render_template('queue.html', pending=pending, done=done)

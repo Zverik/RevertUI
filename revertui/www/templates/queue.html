@@ -7,10 +7,12 @@
   <div id="flash">{{ messages[0] }}</div>
   {% endif %}
   {% endwith %}
+  {% if pending %}
   <h2>Pending</h2>
   {% for job in pending %}
   <a href="{{ url_for('show', revid=job.id) }}">Job {{ job.id }}</a> by {{ job.username}}, {{ job.status }}: {{ job.changesets }}<br>
   {% endfor %}
+  {% endif %}
   <h2>Done</h2>
   {% for job in done %}
   <a href="{{ url_for('show', revid=job.id) }}">Job {{ job.id }}</a> by {{ job.username }}, {{ job.status }}: {{ job.changesets }}<br>

@@ -1,6 +1,8 @@
 {% extends 'layout.html' %}
 {% block title %}Job {{ job.id }}{% endblock %}
 {% block content %}
+  <div id="changesets">
+  </div>
   <div>
     Reverting changesets: {{ job.changesets }}<br>
     Comment: {{ job.comment }}<br>

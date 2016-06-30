@@ -1,0 +1,7 @@
+<div class="changeset">
+  Changeset {{ changeset.id }} by {{ changeset.user }}<br>
+  Made with {{ changeset.tags.created_by or 'Unknown' }} on {{ changeset.created.strftime('%d.%m.%Y %H:%M') }}<br>
+  {% if changeset.tags.comment %}
+  <i>{{ changeset.tags.comment }}</i>
+  {% endif %}
+</div>

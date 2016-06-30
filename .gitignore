@@ -3,3 +3,4 @@ instance/
 revertui.db
 lock
 revertui/venv/
+revertui/config_local.py
