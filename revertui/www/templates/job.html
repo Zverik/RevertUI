@@ -4,7 +4,10 @@
   <div id="changesets">
   </div>
   <div>
-    Reverting changesets: {{ job.changesets }}<br>
+    Reverting changesets:
+    {% for ch in changesets %}
+    <a href="https://www.openstreetmap.org/changeset/{{ ch }}">{{ ch }}</a>
+    {% endfor %}<br>
     Comment: {{ job.comment }}<br>
     User: {{ job.username }}<br>
     Added: {{ job.timestamp.strftime('%d.%m.%Y') }}<br>

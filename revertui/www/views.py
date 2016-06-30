@@ -29,7 +29,9 @@ def front():
         return render_template('login.html')
     csrf_token = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(20))
     session['csrf_token'] = csrf_token
-    return render_template('index.html', csrf_token=csrf_token)
+    return render_template('index.html', csrf_token=csrf_token,
+                           max_changesets=app.config['MAX_CHANGESETS'],
+                           max_edits=app.config['MAX_DIFFS'])
 
 
 @app.route('/login')
@@ -158,7 +160,8 @@ def show(revid):
         flash('There is not job with id={0}'.format(revid))
         return redirect(url_for('queue'))
     can_cancel = task.pending and task.username == session['osm_username']
-    return render_template('job.html', job=task, can_cancel=can_cancel)
+    changesets = task.changesets.split()
+    return render_template('job.html', job=task, can_cancel=can_cancel, changesets=changesets)
 
 
 @app.route('/<int:revid>/cancel')

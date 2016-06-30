@@ -24,4 +24,10 @@
   <div id="results">
   </div>
   <p><a href="{{ url_for('queue') }}">Queue</a></p>
+  <div id="description">
+    <h2>This is the Revert UI</h2>
+    <p>It is a simple reverter: you give it a list of changesets (whitespace-separated, you also can paste whole links), and it reverts these. It would be nice to explain what you are reverting in the comment field. Revert jobs are processed once a minute, so you will have some time to cancel yours if you make a mistake. If not, you can simply revert the reverting changeset.</p>
+    <p>There are limits: at most {{ max_changesets }} changesets, {{ max_edits }} changed objects in total. That is because the reverter makes C+E*2 API calls, which can be quite high. The reason for that is, the reverter not just restores older versions of objects, but it does a three-way merge with the last versions. Which means, it correctly reverts modified tag values or node moves, without any conflicts. But it also doesn't bother with complex changes, like reverting a relation members change, or a way geometry. Unless these are still in the latest versions.</p>
+    <p>To bypass the limits, use <a href="https://github.com/Zverik/simple-revert">the revert script</a>, which is called by this UI. If anything goes wrong with the revert, please add an issue there. Please be reasonable and revert only changes you know are wrong or hard to fix.</p>
+  </div>
 {% endblock %}
