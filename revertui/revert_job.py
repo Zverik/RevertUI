@@ -83,10 +83,11 @@ def process(task):
 
     oauth = OAuth1(config.OAUTH_KEY, config.OAUTH_SECRET, task.token, task.secret)
 
+    comment = (task.comment or '').encode('utf-8')
     tags = {
         'created_by': config.CREATED_BY,
-        'comment': (task.comment or 'Reverting {0}'.format(
-            ', '.join(['{0} by {1}'.format(str(x), ch_users[x]) for x in changesets]))).encode('utf-8')
+        'comment': comment or 'Reverting {0}'.format(
+            ', '.join(['{0} by {1}'.format(str(x), ch_users[x]) for x in changesets]))
     }
 
     resp = requests.put(API_ENDPOINT + '/api/0.6/changeset/create', data=changeset_xml(tags), auth=oauth)
