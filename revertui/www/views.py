@@ -30,7 +30,7 @@ oauth.register(
 def front():
     """No logic, just display the front page.
     All interaction there is done via javascript."""
-    if 'osm_token' not in session:
+    if 'osm_token2' not in session:
         return render_template('login.html')
     csrf_token = ''.join(
         random.choice(string.ascii_letters + string.digits)
@@ -59,7 +59,7 @@ def oauth():
     user_details = etree.fromstring(response.content)
     name = user_details[0].get('display_name')
 
-    session['osm_token'] = json.dumps(token)
+    session['osm_token2'] = json.dumps(token)
     session['osm_username'] = name
     session.permanent = True
     return redirect(url_for('front'))
@@ -67,8 +67,8 @@ def oauth():
 
 @app.route('/logout')
 def logout():
-    if 'osm_token' in session:
-        del session['osm_token']
+    if 'osm_token2' in session:
+        del session['osm_token2']
     if 'osm_username' in session:
         del session['osm_username']
     return redirect(url_for('front'))
@@ -152,7 +152,7 @@ def revert():
     database.create_tables([Task], safe=True)
     task = Task()
     task.username = session['osm_username']
-    task.token = session['osm_token']
+    task.token = session['osm_token2']
     task.secret = ''
     task.changesets = ' '.join(changesets)
     task.comment = comment
