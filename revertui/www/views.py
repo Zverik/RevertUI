@@ -148,49 +148,50 @@ def revert():
             return redirect(url_for('front'))
 
     # Finally, add the task to the pool.
-    database.connect()
-    database.create_tables([Task], safe=True)
-    task = Task()
-    task.username = session['osm_username']
-    task.token = session['osm_token2']
-    task.secret = ''
-    task.changesets = ' '.join(changesets)
-    task.comment = comment
-    task.save()
+    with database:
+        database.create_tables([Task], safe=True)
+        task = Task()
+        task.username = session['osm_username']
+        task.token = session['osm_token2']
+        task.secret = ''
+        task.changesets = ' '.join(changesets)
+        task.comment = comment
+        task.save()
+
     return redirect(url_for('show', revid=task.id))
 
 
 @app.route('/<int:revid>')
 def show(revid):
-    database.connect()
-    try:
-        task = Task.get(Task.id == revid)
-    except Task.DoesNotExist:
-        flash('There is not job with id={0}'.format(revid))
-        return redirect(url_for('queue'))
-    can_cancel = task.pending and task.username == session['osm_username']
+    with database:
+        try:
+            task = Task.get(Task.id == revid)
+        except Task.DoesNotExist:
+            flash('There is not job with id={0}'.format(revid))
+            return redirect(url_for('queue'))
+        can_cancel = task.pending and task.username == session['osm_username']
     return render_template('job.html', job=task, can_cancel=can_cancel)
 
 
 @app.route('/<int:revid>/cancel')
 def cancel_task(revid):
-    database.connect()
-    try:
-        task = Task.get(Task.id == revid)
-        if task.username != session['osm_username']:
-            flash('A task can be cancelled only by its owner.')
-        elif task.pending:
-            task.delete_instance()
-        else:
-            flash('The task is not pending, cannot cancel it.')
-    except Task.DoesNotExist:
-        flash('There is not job with id={0}'.format(revid))
+    with database:
+        try:
+            task = Task.get(Task.id == revid)
+            if task.username != session['osm_username']:
+                flash('A task can be cancelled only by its owner.')
+            elif task.pending:
+                task.delete_instance()
+            else:
+                flash('The task is not pending, cannot cancel it.')
+        except Task.DoesNotExist:
+            flash('There is not job with id={0}'.format(revid))
     return redirect(url_for('queue'))
 
 
 @app.route('/queue')
 def queue():
-    database.connect()
-    pending = Task.select().where(Task.pending)
-    done = Task.select().where(~Task.pending).order_by(-Task.id).limit(app.config['MAX_HISTORY'])
+    with database:
+        pending = Task.select().where(Task.pending)
+        done = Task.select().where(~Task.pending).order_by(-Task.id).limit(app.config['MAX_HISTORY'])
     return render_template('queue.html', pending=pending, done=done)
