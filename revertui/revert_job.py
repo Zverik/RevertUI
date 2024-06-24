@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 import sys
 import os
-import config
 import requests
 import atexit
 import json
 from authlib.integrations.requests_client import OAuth2Auth
-from db import database, Task
+from . import config
+from .db import database, Task
 from simple_revert import (
     download_changesets, revert_changes,
     RevertError, API_ENDPOINT, changeset_xml, changes_to_osc)
@@ -104,7 +104,7 @@ def process(task):
         resp = requests.put('{0}/api/0.6/changeset/{1}/close'.format(API_ENDPOINT, changeset_id), auth=oauth)
 
 
-if __name__ == '__main__':
+def main():
     if not lock():
         sys.exit(0)
 
@@ -120,3 +120,7 @@ if __name__ == '__main__':
         process(task)
     except Exception as e:
         update_status_exit_on_error(task, 'system error', str(e))
+
+
+if __name__ == '__main__':
+    main()
