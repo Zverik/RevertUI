@@ -75,7 +75,7 @@ def process(task):
 
     oauth = OAuth2Auth(json.loads(task.token))
 
-    comment = (task.comment or '').encode('utf-8')
+    comment = task.comment or ''
     tags = {
         'created_by': config.CREATED_BY,
         'comment': comment or 'Reverting {0}'.format(
