@@ -6,8 +6,9 @@ import requests
 import atexit
 from requests_oauthlib import OAuth2
 from db import database, Task
-from simple_revert.simple_revert import download_changesets, revert_changes
-from simple_revert.common import RevertError, API_ENDPOINT, changeset_xml, changes_to_osc
+from simple_revert import (
+    download_changesets, revert_changes
+    RevertError, API_ENDPOINT, changeset_xml, changes_to_osc)
 
 LOCK_FILENAME = os.path.join(os.path.dirname(__file__), 'lock')
 

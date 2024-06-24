@@ -3,3 +3,4 @@ requests-oauthlib
 Flask-OAuthlib
 peewee
 uvicorn[standard]
+simple_revert

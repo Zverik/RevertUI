@@ -1,3 +1,0 @@
-[submodule "simple_revert"]
-	path = revertui/simple_revert
-	url = https://github.com/Zverik/simple-revert.git
