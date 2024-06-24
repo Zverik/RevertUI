@@ -4,7 +4,7 @@ from flask import (
     flash, jsonify, Response, abort)
 from authlib.integrations.flask_client import OAuth
 from authlib.common.errors import AuthlibBaseError
-from db import database, Task
+from ..db import database, Task
 import json
 import random
 import string
