@@ -2,3 +2,4 @@ flask
 requests-oauthlib
 Flask-OAuthlib
 peewee
+uvicorn[standard]

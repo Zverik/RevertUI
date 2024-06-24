@@ -1,5 +1,7 @@
 from www import app
-from flask import render_template, session, url_for, redirect, request, flash, jsonify, escape, Response, abort
+from flask import (
+    render_template, session, url_for, redirect, request,
+    flash, jsonify, escape, Response, abort)
 from flask_oauthlib.client import OAuth, get_etree
 from db import database, Task
 import urllib2
@@ -10,15 +12,17 @@ from datetime import datetime
 
 API_ENDPOINT = 'https://api.openstreetmap.org/api/0.6/'
 
-oauth = OAuth()
-openstreetmap = oauth.remote_app('OpenStreetMap',
-                                 base_url=API_ENDPOINT,
-                                 request_token_url='https://www.openstreetmap.org/oauth/request_token',
-                                 access_token_url='https://www.openstreetmap.org/oauth/access_token',
-                                 authorize_url='https://www.openstreetmap.org/oauth/authorize',
-                                 consumer_key=app.config['OAUTH_KEY'],
-                                 consumer_secret=app.config['OAUTH_SECRET']
-                                 )
+oauth = OAuth(app)
+openstreetmap = oauth.remote_app(
+    'OpenStreetMap',
+    base_url=API_ENDPOINT,
+    request_token_url=None,
+    access_token_url='https://www.openstreetmap.org/oauth2/token',
+    authorize_url='https://www.openstreetmap.org/oauth2/authorize',
+    consumer_key=app.config['OAUTH_KEY'],
+    consumer_secret=app.config['OAUTH_SECRET'],
+    request_token_params={'scope': 'read_prefs write_api'},
+    )
 
 
 @app.route('/')
@@ -27,7 +31,9 @@ def front():
     All interaction there is done via javascript."""
     if 'osm_token' not in session:
         return render_template('login.html')
-    csrf_token = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(20))
+    csrf_token = ''.join(
+        random.choice(string.ascii_letters + string.digits)
+        for _ in range(20))
     session['csrf_token'] = csrf_token
     return render_template('index.html', csrf_token=csrf_token,
                            max_changesets=app.config['MAX_CHANGESETS'],
@@ -40,24 +46,19 @@ def login():
 
 
 @app.route('/oauth')
-@openstreetmap.authorized_handler
-def oauth(resp):
-    if resp is None:
+def oauth():
+    resp = openstreetmap.authorized_response()
+    if resp is None or resp.get('access_token') is None:
         return 'Denied. <a href="' + url_for('front') + '">Try again</a>.'
-    session['osm_token'] = (
-            resp['oauth_token'],
-            resp['oauth_token_secret']
-    )
+    session['osm_token'] = (resp['access_token'], '')
     user_details = openstreetmap.get('user/details').data
     session['osm_username'] = user_details[0].get('display_name')
     return redirect(url_for('front'))
 
 
 @openstreetmap.tokengetter
-def get_token(token='user'):
-    if token == 'user' and 'osm_token' in session:
-        return session['osm_token']
-    return None
+def get_token():
+    return session.get('osm_token')
 
 
 @app.route('/logout')
@@ -79,7 +80,8 @@ def get_changesets(query):
             res = {
                 'id': changeset.get('id'),
                 'user': changeset.get('user'),
-                'created': datetime.strptime(changeset.get('created_at'), '%Y-%m-%dT%H:%M:%SZ'),
+                'created': datetime.strptime(changeset.get('created_at'),
+                                             '%Y-%m-%dT%H:%M:%SZ'),
                 'tags': {}
             }
             for tag in changeset.findall('tag'):
@@ -102,12 +104,14 @@ def changeset(changeset_ids):
     d = {}
     for ch in changesets:
         d[ch['id']] = ch
-    return ''.join([render_template('changeset.html', changeset=d[x]) for x in changeset_ids.split(',')])
+    return ''.join([render_template('changeset.html', changeset=d[x])
+                    for x in changeset_ids.split(',')])
 
 
 @app.route('/by_user/<user>')
 def by_user(user):
-    changesets = get_changesets('changesets?closed=true&display_name={0}'.format(escape(user)))
+    changesets = get_changesets(
+        'changesets?closed=true&display_name={0}'.format(escape(user)))
     if changesets is None or len(changesets) == 0:
         return jsonify(status='Error')
     return Response(json.dumps(changesets), mimetype='application/json')

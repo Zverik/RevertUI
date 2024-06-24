@@ -1,20 +1,10 @@
 #!/usr/bin/env python
 import sys
 import os
-
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-sys.path.insert(0, BASE_DIR)
-
-# Include virtualenv into path
-PYTHON = 'python2.7'
-VENV_DIR = os.path.join(BASE_DIR, 'venv', 'lib', PYTHON, 'site-packages')
-if os.path.exists(VENV_DIR):
-    sys.path.insert(1, VENV_DIR)
-
 import config
 import requests
 import atexit
-from requests_oauthlib import OAuth1
+from requests_oauthlib import OAuth2
 from db import database, Task
 from simple_revert.simple_revert import download_changesets, revert_changes
 from simple_revert.common import RevertError, API_ENDPOINT, changeset_xml, changes_to_osc
@@ -81,7 +71,7 @@ def process(task):
         update_status_exit_on_error(task, 'already reverted')
         sys.exit(0)
 
-    oauth = OAuth1(config.OAUTH_KEY, config.OAUTH_SECRET, task.token, task.secret)
+    oauth = OAuth2(config.OAUTH_KEY, None, task.token)
 
     comment = (task.comment or '').encode('utf-8')
     tags = {
