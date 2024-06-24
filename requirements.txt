@@ -2,5 +2,5 @@ flask
 requests
 authlib
 peewee
-uvicorn[standard]
+gunicorn
 simple_revert
