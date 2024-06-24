@@ -44,7 +44,7 @@ def front():
 @app.route('/login')
 def login():
     return oauth.openstreetmap.authorize_redirect(
-        url_for('authorize', _external=True))
+        app.config['BASE_URL'].rstrip('/') + url_for('authorize'))
 
 
 @app.route('/oauth')

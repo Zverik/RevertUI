@@ -6,6 +6,8 @@ OAUTH_SECRET = ''
 # Change this for the production
 SECRET_KEY = 'sakdfjhasldfhasldfsdfas21421432134'
 
+BASE_URL = 'http://127.0.0.1/'
+
 # The rest you can leave as is or override if needed
 
 CREATED_BY = 'RevertUI 1.0'
