@@ -1,6 +1,6 @@
 flask
-requests-oauthlib
-Flask-OAuthlib
+requests
+authlib
 peewee
 uvicorn[standard]
 simple_revert

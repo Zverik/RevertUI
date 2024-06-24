@@ -1,28 +1,29 @@
-from www import app
+from . import app
 from flask import (
     render_template, session, url_for, redirect, request,
-    flash, jsonify, escape, Response, abort)
-from flask_oauthlib.client import OAuth, get_etree
+    flash, jsonify, Response, abort)
+from authlib.integrations.flask_client import OAuth
+from authlib.common.errors import AuthlibBaseError
 from db import database, Task
-import urllib2
 import json
 import random
 import string
+import requests
 from datetime import datetime
+from xml.etree import ElementTree as etree
 
 API_ENDPOINT = 'https://api.openstreetmap.org/api/0.6/'
 
 oauth = OAuth(app)
-openstreetmap = oauth.remote_app(
-    'OpenStreetMap',
-    base_url=API_ENDPOINT,
-    request_token_url=None,
+oauth.register(
+    'openstreetmap',
+    api_base_url=API_ENDPOINT,
     access_token_url='https://www.openstreetmap.org/oauth2/token',
     authorize_url='https://www.openstreetmap.org/oauth2/authorize',
-    consumer_key=app.config['OAUTH_KEY'],
-    consumer_secret=app.config['OAUTH_SECRET'],
-    request_token_params={'scope': 'read_prefs write_api'},
-    )
+    client_id=app.config['OAUTH_KEY'],
+    client_secret=app.config['OAUTH_SECRET'],
+    client_kwargs={'scope': 'read_prefs write_api'},
+)
 
 
 @app.route('/')
@@ -42,23 +43,26 @@ def front():
 
 @app.route('/login')
 def login():
-    return openstreetmap.authorize(callback=url_for('oauth'))
+    return oauth.openstreetmap.authorize_redirect(
+        url_for('oauth', _external=True))
 
 
 @app.route('/oauth')
 def oauth():
-    resp = openstreetmap.authorized_response()
-    if resp is None or resp.get('access_token') is None:
-        return 'Denied. <a href="' + url_for('front') + '">Try again</a>.'
-    session['osm_token'] = (resp['access_token'], '')
-    user_details = openstreetmap.get('user/details').data
-    session['osm_username'] = user_details[0].get('display_name')
+    client = oauth.openstreetmap
+    try:
+        token = client.authorize_access_token()
+    except AuthlibBaseError:
+        return f'Authorization denied. <a href="{url_for("front")}">Try again</a>.'
+
+    response = client.get('user/details')
+    user_details = etree.fromstring(response.content)
+    name = user_details[0].get('display_name')
+
+    session['osm_token'] = json.dumps(token)
+    session['osm_username'] = name
+    session.permanent = True
     return redirect(url_for('front'))
-
-
-@openstreetmap.tokengetter
-def get_token():
-    return session.get('osm_token')
 
 
 @app.route('/logout')
@@ -70,11 +74,13 @@ def logout():
     return redirect(url_for('front'))
 
 
-def get_changesets(query):
+def get_changesets(params):
     """Downloads a changeset and returns a dict with its info."""
     try:
-        resp = urllib2.urlopen('{0}{1}'.format(API_ENDPOINT, query))
-        root = get_etree().parse(resp).getroot()
+        resp = requests.get(f'{API_ENDPOINT}changesets', params)
+        if resp.status_code != 200:
+            return None
+        root = etree.fromstring(resp.content)
         changesets = []
         for changeset in root.findall('changeset'):
             res = {
@@ -97,7 +103,7 @@ def changeset(changeset_ids):
     import re
     if not re.match(r'^\d+(,\d+)*$', changeset_ids):
         abort(401)
-    changesets = get_changesets('changesets?changesets=' + changeset_ids)
+    changesets = get_changesets({'changesets': changeset_ids})
     if changesets is None or len(changesets) == 0:
         return '<div class="changeset">Changesets {0}</div>'.format(changeset_ids)
     # Reorder changesets in the query order
@@ -110,8 +116,7 @@ def changeset(changeset_ids):
 
 @app.route('/by_user/<user>')
 def by_user(user):
-    changesets = get_changesets(
-        'changesets?closed=true&display_name={0}'.format(escape(user)))
+    changesets = get_changesets({'closed': 'true', 'display_name': user})
     if changesets is None or len(changesets) == 0:
         return jsonify(status='Error')
     return Response(json.dumps(changesets), mimetype='application/json')
@@ -147,8 +152,8 @@ def revert():
     database.create_tables([Task], safe=True)
     task = Task()
     task.username = session['osm_username']
-    task.token = session['osm_token'][0]
-    task.secret = session['osm_token'][1]
+    task.token = session['osm_token']
+    task.secret = ''
     task.changesets = ' '.join(changesets)
     task.comment = comment
     task.save()

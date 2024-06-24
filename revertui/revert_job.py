@@ -4,10 +4,11 @@ import os
 import config
 import requests
 import atexit
-from requests_oauthlib import OAuth2
+import json
+from authlib.integrations.requests_client import OAuth2Auth
 from db import database, Task
 from simple_revert import (
-    download_changesets, revert_changes
+    download_changesets, revert_changes,
     RevertError, API_ENDPOINT, changeset_xml, changes_to_osc)
 
 LOCK_FILENAME = os.path.join(os.path.dirname(__file__), 'lock')
@@ -72,7 +73,7 @@ def process(task):
         update_status_exit_on_error(task, 'already reverted')
         sys.exit(0)
 
-    oauth = OAuth2(config.OAUTH_KEY, None, task.token)
+    oauth = OAuth2Auth(json.loads(task.token))
 
     comment = (task.comment or '').encode('utf-8')
     tags = {

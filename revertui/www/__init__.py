@@ -1,6 +1,7 @@
 from flask import Flask
+from .. import config
 
 app = Flask(__name__)
-app.config.from_object('config')
+app.config.from_object(config)
 
-import www.views
+from . import views
