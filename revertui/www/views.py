@@ -44,11 +44,11 @@ def front():
 @app.route('/login')
 def login():
     return oauth.openstreetmap.authorize_redirect(
-        url_for('oauth', _external=True))
+        url_for('authorize', _external=True))
 
 
 @app.route('/oauth')
-def oauth():
+def authorize():
     client = oauth.openstreetmap
     try:
         token = client.authorize_access_token()
