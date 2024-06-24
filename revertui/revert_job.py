@@ -82,7 +82,7 @@ def process(task):
             ', '.join(['{0} by {1}'.format(str(x), ch_users[x]) for x in changesets]))
     }
 
-    resp = requests.put(API_ENDPOINT + '/api/0.6/changeset/create', data=changeset_xml(tags), auth=oauth)
+    resp = requests.put(f'{API_ENDPOINT}changeset/create', data=changeset_xml(tags), auth=oauth)
     if resp.status_code == 200:
         changeset_id = resp.text
     else:
@@ -91,7 +91,7 @@ def process(task):
 
     try:
         osc = changes_to_osc(changes, changeset_id)
-        resp = requests.post('{0}/api/0.6/changeset/{1}/upload'.format(API_ENDPOINT, changeset_id), osc, auth=oauth)
+        resp = requests.post(f'{API_ENDPOINT}changeset/{changeset_id}/upload', osc, auth=oauth)
         if resp.status_code == 200:
             task.status = 'done'
             task.error = str(changeset_id)
@@ -101,7 +101,7 @@ def process(task):
             task.error = 'Server rejected the changeset with code {0}: {1}'.format(resp.code, resp.text)
         task.save()
     finally:
-        resp = requests.put('{0}/api/0.6/changeset/{1}/close'.format(API_ENDPOINT, changeset_id), auth=oauth)
+        resp = requests.put(f'{API_ENDPOINT}changeset/{changeset_id}/close', auth=oauth)
 
 
 def main():
