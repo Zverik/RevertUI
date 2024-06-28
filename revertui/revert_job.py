@@ -98,7 +98,7 @@ def process(task):
         else:
             # We don't want to exit before closing the changeset
             task.status = 'error'
-            task.error = 'Server rejected the changeset with code {0}: {1}'.format(resp.code, resp.text)
+            task.error = 'Server rejected the changeset with code {0}: {1}'.format(resp.status_code, resp.text)
         task.save()
     finally:
         resp = requests.put(f'{API_ENDPOINT}changeset/{changeset_id}/close', auth=oauth)
